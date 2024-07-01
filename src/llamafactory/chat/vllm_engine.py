@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence, Union
 
@@ -45,14 +59,14 @@ class VllmEngine(BaseEngine):
         self.tokenizer = tokenizer_module["tokenizer"]
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left"
-        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template, data_args.tool_format)
         self.generating_args = generating_args.to_dict()
 
         engine_args = {
             "model": model_args.model_name_or_path,
             "trust_remote_code": True,
             "download_dir": model_args.cache_dir,
-            "dtype": model_args.vllm_dtype,
+            "dtype": model_args.infer_dtype,
             "max_model_len": model_args.vllm_maxlen,
             "tensor_parallel_size": get_device_count() or 1,
             "gpu_memory_utilization": model_args.vllm_gpu_util,
@@ -168,9 +182,6 @@ class VllmEngine(BaseEngine):
             lora_request=self.lora_request,
         )
         return result_generator
-
-    async def start(self) -> None:
-        pass
 
     async def chat(
         self,
